@@ -1,7 +1,3 @@
-from rest_framework import serializers
-from .models import User, Coords, Level, PerevalAdded, Images
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -55,6 +51,7 @@ class PerevalAddedSerializer(serializers.ModelSerializer):
     coords = CoordsSerializer()
     level = LevelSerializer()
     images = ImagesSerializer(many=True)
+    add_time = serializers.DateTimeField()
 
     class Meta:
         model = PerevalAdded
@@ -63,17 +60,28 @@ class PerevalAddedSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         coords_data = validated_data.pop('coords')
+        level_data = validated_data.pop('level')
         images_data = validated_data.pop('images')
 
-        user_instance = User.objects.create(**user_data)
-        coords_instance = Coords.objects.create(**coords_data)
-        images_instances = [Images.objects.create(**image_data) for image_data in images_data]
+        add_time = validated_data.pop('add_time')
+        validated_data['add_time'] = add_time
 
-        validated_data['user'] = user_instance
-        validated_data['coords'] = coords_instance
-        validated_data['images'] = images_instances
+        pereval_added = PerevalAdded.objects.create(**validated_data)  # obj with unique ID
 
-        return PerevalAdded.objects.create(**validated_data)
+        # 'НАЗНАЧАЕМ' ВСЕМ ID ПЕРЕВАЛА
+        user_instance = User.objects.create(id=pereval_added.id, **user_data)
+        coords_instance = Coords.objects.create(id=pereval_added.id, **coords_data)
+        level_instance = Level.objects.create(id=pereval_added.id, **level_data)
+        images_instances = [Images.objects.create(id=pereval_added.id, **image_data) for image_data in images_data]
+
+        pereval_added.user = user_instance
+        pereval_added.coords = coords_instance
+        pereval_added.level = level_instance
+        pereval_added.save()
+
+        pereval_added.images.set(images_instances)
+
+        return pereval_added
 
 
 
