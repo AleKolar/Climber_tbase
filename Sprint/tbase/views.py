@@ -39,7 +39,7 @@ class SubmitDataView(APIView):
             # Связывание объектов Images с PerevalAdded
             pereval_obj.images.set(images_instances)
 
-            # Код для отправки данных на внешний API
+            # Код для отправки данных на внешний API это надо будет позже
             pereval_data_for_api = {
                 "beauty_title": pereval_obj.beauty_title,
                 "title": pereval_obj.title,
